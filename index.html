@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HolyQuest.1.1 - Tecnotips</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #fbbf24;
+            --bg-dark: #0f172a;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+        }
+        .font-holy { font-family: 'Cinzel', serif; }
+        
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .timer-bar {
+            transition: width 0.1s linear;
+        }
+
+        /* Estilos del Diploma */
+        #diploma-box {
+            background: #fff9eb;
+            color: #1e293b;
+            border: 15px solid #d97706;
+            outline: 5px double #fbbf24;
+            position: relative;
+        }
+        .diploma-ornament {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border: 2px solid #d97706;
+        }
+        .top-left { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+        .top-right { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+        .bottom-left { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+        .bottom-right { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+
+        input::placeholder { color: #64748b; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #diploma-box, #diploma-box * { visibility: visible; }
+            #diploma-box { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="w-full bg-slate-900/80 border-b-2 border-amber-500/30 p-4 shadow-2xl sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-holy tracking-widest text-amber-500 drop-shadow-md">HOLYQUEST</h1>
+            <div id="status-bar" class="hidden flex items-center space-x-6">
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold leading-none">Discípulo</p>
+                    <p id="display-name" class="text-amber-400 font-bold italic"></p>
+                </div>
+                <div class="bg-slate-800 p-2 rounded-lg border border-amber-500/20">
+                    <p id="global-clock" class="text-xl font-mono text-amber-500 font-bold leading-none">10:00</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4 relative">
+        <!-- Pantalla de Inicio -->
+        <div id="screen-start" class="max-w-md w-full glass p-8 rounded-3xl text-center space-y-6 shadow-2xl">
+            <div class="space-y-2">
+                <h2 class="text-4xl font-holy text-white">BIENVENIDO</h2>
+                <p class="text-slate-400 text-sm italic">Ingresa tus datos para comenzar el desafío de 20 preguntas.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <input type="text" id="input-username" 
+                    class="w-full bg-slate-800 border-2 border-slate-700 rounded-xl p-4 text-center focus:border-amber-500 outline-none transition-all text-white font-bold" 
+                    placeholder="NOMBRE DEL DISCÍPULO">
+                <button onclick="initApp()" class="w-full py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all transform active:scale-95">
+                    INICIAR CUESTIONARIO
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Juego -->
+        <div id="screen-quiz" class="hidden max-w-2xl w-full space-y-6">
+            <div class="flex justify-between items-end px-2">
+                <div>
+                    <span id="q-type" class="bg-amber-900/40 text-amber-300 text-[10px] px-3 py-1 rounded-full border border-amber-500/30 uppercase font-black">TIPO</span>
+                    <h3 id="q-number" class="text-slate-400 text-xs mt-1 font-bold">PREGUNTA 1 DE 20</h3>
+                </div>
+            </div>
+
+            <div class="glass p-8 rounded-3xl space-y-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-slate-800">
+                    <div id="q-timer-fill" class="timer-bar h-full bg-amber-500 w-full"></div>
+                </div>
+
+                <p id="q-text" class="text-xl md:text-2xl font-semibold text-center leading-relaxed"></p>
+
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+                <div id="input-container" class="hidden flex flex-col items-center space-y-4">
+                    <input type="text" id="word-input" class="w-full max-w-sm bg-slate-800 border-2 border-slate-700 rounded-xl p-4 text-center text-xl font-bold uppercase tracking-widest text-amber-400" placeholder="Escribe la palabra...">
+                    <button onclick="processAnswer(document.getElementById('word-input').value)" class="bg-amber-600 px-8 py-3 rounded-xl font-bold hover:bg-amber-500 transition-all">ENVIAR RESPUESTA</button>
+                </div>
+
+                <div id="feedback" class="hidden text-center animate-bounce">
+                    <p id="feedback-text" class="font-black text-xl italic"></p>
+                    <p id="feedback-ref" class="text-slate-400 text-sm mt-1 italic"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pantalla Final con Diploma -->
+        <div id="screen-end" class="hidden max-w-2xl w-full space-y-8 py-10">
+            <!-- Diploma (Se muestra si score >= 800) -->
+            <div id="diploma-box" class="hidden p-12 rounded-sm shadow-2xl text-center overflow-hidden">
+                <div class="diploma-ornament top-left"></div>
+                <div class="diploma-ornament top-right"></div>
+                <div class="diploma-ornament bottom-left"></div>
+                <div class="diploma-ornament bottom-right"></div>
+
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-holy text-amber-700 border-b-2 border-amber-200 inline-block px-8 pb-2">RECONOCIMIENTO ESPECIAL</h2>
+                    <p class="text-slate-600 italic">La comunidad HolyQuest otorga el presente a:</p>
+                    <h3 id="diploma-name" class="text-4xl font-bold text-slate-900 underline decoration-amber-500 uppercase">NOMBRE</h3>
+                    <div class="py-4">
+                        <p class="text-xl text-slate-800 font-semibold" id="diploma-msg">¡Felicitaciones por haber logrado un récord de: 000!</p>
+                        <p class="text-slate-500 text-sm mt-2 max-w-md mx-auto italic">"Lámpara es a mis pies tu palabra, y lumbrera a mi camino." (Salmos 119:105)</p>
+                    </div>
+                    
+                    <!-- Emblema de Medalla Dinámica -->
+                    <div id="emblem-container" class="flex flex-col items-center justify-center py-4">
+                        <div id="stars-row" class="flex space-x-2 text-2xl text-amber-500 mb-2"></div>
+                        <div id="medal-icon"></div>
+                        <p id="medal-rank" class="font-black text-lg uppercase mt-2 tracking-widest text-amber-800">BRONCE</p>
+                    </div>
+
+                    <p id="diploma-date" class="text-slate-500 font-mono text-sm border-t border-slate-200 pt-4">01 de Enero 2024</p>
+                </div>
+            </div>
+
+            <!-- Resumen de Puntos (Siempre visible) -->
+            <div class="glass p-10 rounded-3xl text-center space-y-6">
+                <h2 class="text-3xl font-holy text-amber-500">GRACIA Y PAZ</h2>
+                <div class="space-y-1">
+                    <p id="end-disciple" class="text-2xl font-bold text-white"></p>
+                    <p class="text-slate-400 uppercase text-xs tracking-tighter">Resumen de la Misión</p>
+                </div>
+                
+                <div class="py-4 border-y border-white/5">
+                    <div id="final-points" class="text-7xl font-black text-amber-500">0</div>
+                    <p class="text-sm font-bold text-slate-500">PUNTOS TOTALES</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-sm font-bold">
+                    <div class="bg-green-500/10 p-3 rounded-xl border border-green-500/20 text-green-400">
+                        <p id="correct-count">0</p> Correctas
+                    </div>
+                    <div class="bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-red-400">
+                        <p id="wrong-count">0</p> Incorrectas
+                    </div>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button onclick="location.reload()" class="flex-1 py-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-all">NUEVO INTENTO</button>
+                    <button id="btn-print" onclick="window.print()" class="hidden flex-1 py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold transition-all">IMPRIMIR DIPLOMA</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full bg-slate-950 border-t border-white/5 p-4 text-center">
+        <p class="text-slate-500 text-[10px] font-bold tracking-[0.3em] uppercase italic">Tecnotips — Tecnología con Propósito</p>
+    </footer>
+
+    <script>
+        const DATABASE = [
+           // Selección Múltiple (MC)
+            { q: "¿Cuál fue el primer milagro de Jesús?", a: "Convertir agua en vino", ref: "Juan 2:1-11", type: "MC", o: ["Sanar a un ciego", "Caminar sobre el agua", "Convertir agua en vino", "Resucitar a Lázaro"] },
+            { q: "¿Cuántos días y noches llovió durante el diluvio?", a: "40 días y 40 noches", ref: "Génesis 7:12", type: "MC", o: ["7 días", "40 días y 40 noches", "100 días", "12 días"] },
+            { q: "¿Quién fue vendido por sus hermanos como esclavo?", a: "José", ref: "Génesis 37:28", type: "MC", o: ["Benjamín", "José", "Isaac", "Judá"] },
+            { q: "¿En qué monte recibió Moisés los 10 Mandamientos?", a: "Sinaí", ref: "Éxodo 19", type: "MC", o: ["Sinaí", "Ararat", "Olivos", "Carmelo"] },
+            { q: "¿Quién derrotó a Goliat?", a: "David", ref: "1 Samuel 17", type: "MC", o: ["Saúl", "Salomón", "Sansón", "David"] },
+            { q: "¿Quién fue el sucesor de Moisés?", a: "Josué", ref: "Josué 1:1-2", type: "MC", o: ["Caleb", "Josué", "Aarón", "Gedeón"] },
+            { q: "¿En qué isla estuvo preso el apóstol Juan?", a: "Patmos", ref: "Apocalipsis 1:9", type: "MC", o: ["Creta", "Chipre", "Patmos", "Malta"] },
+            { q: "¿Quién fue el profeta que desafió a los profetas de Baal en el Monte Carmelo?", a: "Elías", ref: "1 Reyes 18:20-40", type: "MC", o: ["Eliseo", "Isaías", "Elías", "Jeremías"] },
+            { q: "¿Cuál fue el padre de Juan el Bautista?", a: "Zacarías", ref: "Lucas 1:13", type: "MC", o: ["José", "Zacarías", "Eliseo", "Ananías"] },
+            { q: "¿Qué rey construyó el templo en Jerusalén?", a: "Salomón", ref: "1 Reyes 6", type: "MC", o: ["David", "Saúl", "Salomón", "Ezequías"] },
+            { q: "¿Quién negó a Jesús tres veces?", a: "Pedro", ref: "Mateo 26:69-75", type: "MC", o: ["Juan", "Pedro", "Andrés", "Tomás"] },
+            { q: "¿Qué profeta fue tragado por un gran pez?", a: "Jonás", ref: "Jonás 1:17", type: "MC", o: ["Isaías", "Jeremías", "Jonás", "Oseas"] },
+            { q: "¿Cuál es el último libro de la Biblia?", a: "Apocalipsis", ref: "Apocalipsis 1:1", type: "MC", o: ["Génesis", "Hechos", "Apocalipsis", "Romanos"] },
+            { q: "¿Quién fue el primer rey de Israel?", a: "Saúl", ref: "1 Samuel 9:17", type: "MC", o: ["David", "Salomón", "Saúl", "Josías"] },
+            { q: "¿Qué discípulo dudó de la resurrección de Jesús?", a: "Tomás", ref: "Juan 20:24-29", type: "MC", o: ["Pedro", "Juan", "Tomás", "Felipe"] },
+            { q: "¿Qué mujer se convirtió en estatua de sal?", a: "La esposa de Lot", ref: "Génesis 19:26", type: "MC", o: ["Sara", "Raquel", "La esposa de Lot", "Débora"] },
+            { q: "¿Quién interpretó los sueños del faraón en Egipto?", a: "José", ref: "Génesis 41", type: "MC", o: ["Daniel", "José", "Moisés", "Aarón"] },
+            { q: "¿Qué apóstol escribió la mayoría de las cartas del Nuevo Testamento?", a: "Pablo", ref: "Romanos 1:1", type: "MC", o: ["Pedro", "Juan", "Pablo", "Santiago"] },
+            { q: "¿Qué mujer escondió a los espías en Jericó?", a: "Rahab", ref: "Josué 2:1-6", type: "MC", o: ["Rut", "Rahab", "Ester", "Débora"] },
+            { q: "¿Qué profeta fue llevado al cielo en un carro de fuego?", a: "Elías", ref: "2 Reyes 2:11", type: "MC", o: ["Eliseo", "Isaías", "Elías", "Jeremías"] },
+            { q: "¿Qué discípulo caminó sobre el agua hacia Jesús?", a: "Pedro", ref: "Mateo 14:29", type: "MC", o: ["Juan", "Pedro", "Andrés", "Felipe"] },
+            { q: "¿Qué rey tuvo un sueño interpretado por Daniel sobre una estatua?", a: "Nabucodonosor", ref: "Daniel 2", type: "MC", o: ["Darío", "Nabucodonosor", "Ciro", "Artajerjes"] },
+            { q: "¿Quién fue la madre de Samuel?", a: "Ana", ref: "1 Samuel 1:20", type: "MC", o: ["Sara", "Ana", "Raquel", "Elisabet"] },
+            { q: "¿Cuántas plagas envió Dios a Egipto?", a: "10", ref: "Éxodo 7-12", type: "MC", o: ["7", "12", "10", "40"] },
+            { q: "¿Qué ciudad cayó tras dar siete vueltas a sus muros?", a: "Jericó", ref: "Josué 6:20", type: "MC", o: ["Babilonia", "Jericó", "Sodoma", "Nínive"] },
+            { q: "¿Quién fue el hombre más sabio de la tierra?", a: "Salomón", ref: "1 Reyes 3:12", type: "MC", o: ["David", "Salomón", "Daniel", "Moisés"] },
+            { q: "¿Qué apóstol era recaudador de impuestos?", a: "Mateo", ref: "Mateo 9:9", type: "MC", o: ["Pedro", "Mateo", "Lucas", "Bartolomé"] },
+            { q: "¿Cuál es el río donde fue bautizado Jesús?", a: "Jordán", ref: "Mateo 3:13", type: "MC", o: ["Nilo", "Éufrates", "Jordán", "Tigris"] },
+            { q: "¿Qué madera usó Noé para el arca?", a: "Gofre", ref: "Génesis 6:14", type: "MC", o: ["Cedro", "Encina", "Gofre", "Olivo"] },
+            { q: "¿Quién fue la mujer de Isaac?", a: "Rebeca", ref: "Génesis 24:67", type: "MC", o: ["Raquel", "Lea", "Rebeca", "Sara"] },
+            { q: "¿Cómo se llamaba el mar que Dios dividió para los israelitas?", a: "Mar Rojo", ref: "Éxodo 14:21", type: "MC", o: ["Mar Muerto", "Mar Rojo", "Mar de Galilea", "Mar Mediterráneo"] },
+            { q: "¿Qué animal habló a Balaam?", a: "Una asna", ref: "Números 22:28", type: "MC", o: ["Una serpiente", "Un cuervo", "Una asna", "Un león"] },
+            { q: "¿Quién fue el primer mártir cristiano?", a: "Esteban", ref: "Hechos 7:59", type: "MC", o: ["Santiago", "Esteban", "Pedro", "Pablo"] },
+
+            // Verdadero / Falso (TF)
+            { q: "¿Pedro negó a Jesús tres veces antes de que cantara el gallo?", a: "Verdadero", ref: "Mateo 26:75", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Abraham fue el padre de Moisés?", a: "Falso", ref: "Éxodo 6:20", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿El arca de la alianza contenía los diez mandamientos?", a: "Verdadero", ref: "Hebreos 9:4", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Matusalén vivió menos de 100 años?", a: "Falso", ref: "Génesis 5:27", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Jesús nació en Nazaret?", a: "Falso", ref: "Mateo 2:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "Esteban fue el primer mártir cristiano.", a: "Verdadero", ref: "Hechos 7:54-60", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "La torre de Babel se construyó en la ciudad de Nínive.", a: "Falso", ref: "Génesis 11:1-9", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "Sansón perdió su fuerza porque le cortaron la barba.", a: "Falso", ref: "Jueces 16:17-19", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "Jesús multiplicó cinco panes y dos peces para alimentar a la multitud.", a: "Verdadero", ref: "Mateo 14:17-21", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El profeta Daniel fue lanzado al foso de los leones.", a: "Verdadero", ref: "Daniel 6:16", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El rey Herodes ordenó la muerte de todos los niños menores de dos años en Belén.", a: "Verdadero", ref: "Mateo 2:16", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El libro de los Salmos fue escrito únicamente por Moisés.", a: "Falso", ref: "Salmos 90:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El apóstol Pablo escribió una carta a los Romanos.", a: "Verdadero", ref: "Romanos 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "Jonás predicó en la ciudad de Nínive.", a: "Verdadero", ref: "Jonás 3:1-3", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El río Jordán fue cruzado en seco por los israelitas.", a: "Verdadero", ref: "Josué 3:14-17", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El rey David fue hijo de Saúl.", a: "Falso", ref: "1 Samuel 16:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "Jesús fue bautizado por Juan el Bautista en el río Jordán.", a: "Verdadero", ref: "Mateo 3:13-16", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El libro de Apocalipsis fue escrito por Pedro.", a: "Falso", ref: "Apocalipsis 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El profeta Elías fue alimentado por cuervos.", a: "Verdadero", ref: "1 Reyes 17:4-6", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "La esposa de Abraham se llamaba Sara.", a: "Verdadero", ref: "Génesis 17:15", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El arca de Noé descansó sobre el monte Sinaí.", a: "Falso", ref: "Génesis 8:4", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El apóstol Tomás dudó de la resurrección de Jesús.", a: "Verdadero", ref: "Juan 20:24-29", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "El profeta Isaías anunció la venida del Mesías.", a: "Verdadero", ref: "Isaías 7:14", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Matusalén fue el hombre que más años vivió en la Biblia?", a: "Verdadero", ref: "Génesis 5:27", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Jesús nació en Nazaret?", a: "Falso", ref: "Mateo 2:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿El libro de los Salmos es el más largo de la Biblia?", a: "Verdadero", ref: "Biblia RVR1960", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Sansón perdió su fuerza al cortarse las uñas?", a: "Falso", ref: "Jueces 16:19", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿David fue el primer rey de Israel?", a: "Falso", ref: "1 Samuel 10:1", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿El maná caía del cielo todos los días excepto el sábado?", a: "Verdadero", ref: "Éxodo 16:26", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Caín era pastor y Abel era labrador?", a: "Falso", ref: "Génesis 4:2", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿La Biblia tiene 66 libros?", a: "Verdadero", ref: "Biblia RVR1960", type: "TF", o: ["Verdadero", "Falso"] },
+            { q: "¿Pablo se llamaba Saulo antes de su conversión?", a: "Verdadero", ref: "Hechos 13:9", type: "TF", o: ["Verdadero", "Falso"] },
+// Verdadero / Falso (TF)
+{ q: "¿El profeta Jeremías fue lanzado en una cisterna?", a: "Verdadero", ref: "Jeremías 38:6", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Salomón pidió riquezas a Dios en lugar de sabiduría?", a: "Falso", ref: "1 Reyes 3:9-13", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El apóstol Juan escribió el Evangelio según San Juan?", a: "Verdadero", ref: "Juan 21:24", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El profeta Eliseo sucedió a Elías?", a: "Verdadero", ref: "2 Reyes 2:9-15", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Nabucodonosor soñó con una estatua de oro, plata, bronce, hierro y barro?", a: "Verdadero", ref: "Daniel 2:31-33", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El libro de Proverbios fue escrito principalmente por David?", a: "Falso", ref: "Proverbios 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿Jesús convirtió el agua en vino en las bodas de Caná?", a: "Verdadero", ref: "Juan 2:1-11", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El profeta Oseas se casó con una mujer llamada Gomer?", a: "Verdadero", ref: "Oseas 1:2-3", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Saúl consultó a una adivina en Endor?", a: "Verdadero", ref: "1 Samuel 28:7-8", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El libro de Hebreos está en el Antiguo Testamento?", a: "Falso", ref: "Hebreos 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El profeta Habacuc escribió un libro en la Biblia?", a: "Verdadero", ref: "Habacuc 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Ezequías fue sanado después de orar a Dios?", a: "Verdadero", ref: "Isaías 38:1-5", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El libro de Ester menciona explícitamente el nombre de Dios?", a: "Falso", ref: "Libro de Ester", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El profeta Amós era pastor de ovejas?", a: "Verdadero", ref: "Amós 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Josías halló el libro de la ley en el templo?", a: "Verdadero", ref: "2 Reyes 22:8", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El apóstol Pedro escribió el libro de Apocalipsis?", a: "Falso", ref: "Apocalipsis 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El profeta Malaquías es el último del Antiguo Testamento?", a: "Verdadero", ref: "Malaquías 4:6", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El rey Faraón liberó a Israel sin plagas?", a: "Falso", ref: "Éxodo 7-12", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El apóstol Pablo naufragó en la isla de Malta?", a: "Verdadero", ref: "Hechos 28:1", type: "TF", o: ["Verdadero", "Falso"] },
+{ q: "¿El libro de Lamentaciones fue escrito por Jeremías?", a: "Verdadero", ref: "Lamentaciones 1:1", type: "TF", o: ["Verdadero", "Falso"] },
+
+            // Palabra Oculta (FB)
+            { q: "¿Cómo se llama el último libro de la Biblia?", a: "Apocalipsis", ref: "Apocalipsis 1:1", type: "FB" },
+            { q: "Nombre del hombre más fuerte de la Biblia:", a: "Sansón", ref: "Jueces 13", type: "FB" },
+            { q: "¿Quién fue tragado por un gran pez?", a: "Jonás", ref: "Jonás 1:17", type: "FB" },
+            { q: "El primer libro de la Biblia es:", a: "Génesis", ref: "Génesis 1:1", type: "FB" },
+            { q: "Nombre de la madre de Jesús:", a: "María", ref: "Lucas 1:27", type: "FB" },
+            { q: "Lugar donde fueron puestos Adán y Eva:", a: "Edén", ref: "Génesis 2:8", type: "FB" },
+            { q: "¿Quién fue el precursor de Jesús bautizando en el desierto?", a: "Juan", ref: "Mateo 3:1", type: "FB" },
+            { q: "Rey que pidió sabiduría a Dios:", a: "Salomón", ref: "1 Reyes 3", type: "FB" },
+            { q: "Animal que habló a Balaam:", a: "Asna", ref: "Números 22:28", type: "FB" },
+            { q: "Nombre del hermano de Moisés:", a: "Aarón", ref: "Éxodo 4:14", type: "FB" },
+            { q: "¿Quién traicionó a Jesús?", a: "Judas", ref: "Mateo 26", type: "FB" },
+            { q: "¿Cuál es el libro de salmos más largo?", a: "119", ref: "Salmo 119", type: "FB" },
+            { q: "¿Cómo se llama el monte donde Moisés recibió los Diez Mandamientos?", a: "Sinaí", ref: "Éxodo 19:20", type: "FB" },
+            { q: "¿Quién fue la mujer que escondió a los espías en Jericó?", a: "Rahab", ref: "Josué 2:1", type: "FB" },
+            { q: "¿Cómo se llamaba el jardín donde Jesús oró antes de ser entregado?", a: "Getsemaní", ref: "Mateo 26:36", type: "FB" },
+            { q: "¿Qué profeta fue arrojado al foso de los leones?", a: "Daniel", ref: "Daniel 6:16", type: "FB" },
+            { q: "¿Quién fue el primer hombre creado por Dios?", a: "Adán", ref: "Génesis 2:7", type: "FB" },
+            { q: "¿Cuál fue la primera mujer?", a: "Eva", ref: "Génesis 2:22", type: "FB" },
+            { q: "¿Quién construyó el arca para salvarse del diluvio?", a: "Noé", ref: "Génesis 6:14", type: "FB" },
+            { q: "¿Cuál es el libro que narra la salida de Israel de Egipto?", a: "Éxodo", ref: "Éxodo 1:1", type: "FB" },
+            { q: "¿Quién fue el rey que escribió muchos salmos?", a: "David", ref: "Salmos", type: "FB" },
+            { q: "¿Cuál es el nombre del discípulo que dudó de la resurrección de Jesús?", a: "Tomás", ref: "Juan 20:24-29", type: "FB" },
+            { q: "¿Quién interpretó los sueños del faraón en Egipto?", a: "José", ref: "Génesis 41", type: "FB" },
+            { q: "¿Qué mujer se convirtió en estatua de sal?", a: "La esposa de Lot", ref: "Génesis 19:26", type: "FB" },
+            { q: "¿Quién fue el profeta que anunció la venida del Mesías?", a: "Isaías", ref: "Isaías 7:14", type: "FB" },
+            { q: "¿Cuál es el nombre del río donde Jesús fue bautizado?", a: "Jordán", ref: "Mateo 3:13", type: "FB" },
+            { q: "¿Quién fue el apóstol que escribió el Apocalipsis?", a: "Juan", ref: "Apocalipsis 1:1", type: "FB" },
+            { q: "¿Qué rey soñó con una estatua interpretada por Daniel?", a: "Nabucodonosor", ref: "Daniel 2", type: "FB" },
+            { q: "¿Cuál es el nombre del profeta que fue alimentado por cuervos?", a: "Elías", ref: "1 Reyes 17:4-6", type: "FB" },
+            { q: "¿Quién fue la madre de Samuel?", a: "Ana", ref: "1 Samuel 1:20", type: "FB" },
+            { q: "¿Qué ciudad fue destruida junto con Gomorra?", a: "Sodoma", ref: "Génesis 19:24", type: "FB" },
+            { q: "Nombre del monte donde murió Jesús:", a: "Gólgota", ref: "Juan 19:17", type: "FB" },
+            { q: "¿Qué derribó David para vencer a Goliat?", a: "Piedra", ref: "1 Samuel 17:49", type: "FB" },
+            { q: "Nombre del jardín donde fueron puestos Adán y Eva:", a: "Edén", ref: "Génesis 2:8", type: "FB" },
+            { q: "Primer libro del Nuevo Testamento:", a: "Mateo", ref: "Mateo 1:1", type: "FB" },
+            { q: "¿Quién construyó el Arca?", a: "Noé", ref: "Génesis 6", type: "FB" },
+            { q: "Nombre del gigante que desafió a Israel:", a: "Goliat", ref: "1 Samuel 17:4", type: "FB" },
+            { q: "Ciudad donde cayó fuego y azufre:", a: "Sodoma", ref: "Génesis 19:24", type: "FB" },
+            { q: "Instrumento que tocaba David para el rey Saúl:", a: "Arpa", ref: "1 Samuel 16:23", type: "FB" },
+            { q: "Nombre del discípulo amado:", a: "Juan", ref: "Juan 21:20", type: "FB" },
+// Palabra Oculta (FB)
+{ q: "¿Quién interpretó los sueños del faraón en Egipto?", a: "José", ref: "Génesis 41:15-16", type: "FB" },
+{ q: "Nombre del profeta que confrontó al rey Acab en el monte Carmelo:", a: "Elías", ref: "1 Reyes 18:20-40", type: "FB" },
+{ q: "¿Quién fue la madre de Samuel?", a: "Ana", ref: "1 Samuel 1:20", type: "FB" },
+{ q: "Nombre del discípulo que caminó sobre el agua hacia Jesús:", a: "Pedro", ref: "Mateo 14:29", type: "FB" },
+{ q: "¿Cómo se llamaba el gigante derrotado por David?", a: "Goliat", ref: "1 Samuel 17:4", type: "FB" },
+{ q: "Nombre del profeta que fue llevado al cielo en un carro de fuego:", a: "Elías", ref: "2 Reyes 2:11", type: "FB" },
+{ q: "¿Quién fue el rey que escribió muchos salmos?", a: "David", ref: "Salmos", type: "FB" },
+{ q: "Nombre del discípulo que negó a Jesús tres veces:", a: "Pedro", ref: "Mateo 26:75", type: "FB" },
+{ q: "¿Quién fue el padre de Juan el Bautista?", a: "Zacarías", ref: "Lucas 1:13", type: "FB" },
+{ q: "Nombre del profeta que lloró por la destrucción de Jerusalén:", a: "Jeremías", ref: "Lamentaciones 1:1", type: "FB" }
+
+        ];
+
+        let game = {
+            disciple: "",
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            correct: 0,
+            wrong: 0,
+            globalTime: 600,
+            timers: { global: null, question: null }
+        };
+
+        function initApp() {
+            const name = document.getElementById('input-username').value.trim();
+            if(!name) return alert("Ingresa el nombre del discípulo.");
+            game.disciple = name;
+            game.questions = DATABASE.sort(() => Math.random() - 0.5).slice(0, 20);
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+            document.getElementById('status-bar').classList.remove('hidden');
+            document.getElementById('display-name').innerText = game.disciple;
+            startGlobalTimer();
+            renderQuestion();
+        }
+
+        function startGlobalTimer() {
+            game.timers.global = setInterval(() => {
+                game.globalTime--;
+                const m = Math.floor(game.globalTime / 60);
+                const s = game.globalTime % 60;
+                document.getElementById('global-clock').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if(game.globalTime <= 0) finalize();
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            if(game.currentIndex >= 20) return finalize();
+            const q = game.questions[game.currentIndex];
+            document.getElementById('q-number').innerText = `PREGUNTA ${game.currentIndex + 1} DE 20`;
+            document.getElementById('q-text').innerText = q.q;
+            const typeLabel = document.getElementById('q-type');
+            const optsContainer = document.getElementById('options-container');
+            const inputContainer = document.getElementById('input-container');
+            const feedback = document.getElementById('feedback');
+            optsContainer.innerHTML = '';
+            inputContainer.classList.add('hidden');
+            feedback.classList.add('hidden');
+            if(q.type === 'MC' || q.type === 'TF') {
+                typeLabel.innerText = q.type === 'MC' ? 'Selección Múltiple' : 'Verdadero / Falso';
+                q.o.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn p-4 glass rounded-xl border border-white/10 font-bold text-sm text-center";
+                    btn.innerText = opt;
+                    btn.onclick = () => processAnswer(opt);
+                    optsContainer.appendChild(btn);
+                });
+            } else {
+                typeLabel.innerText = 'Palabra Oculta';
+                inputContainer.classList.remove('hidden');
+                document.getElementById('word-input').value = '';
+                document.getElementById('word-input').focus();
+            }
+            startQuestionTimer();
+        }
+
+        function startQuestionTimer() {
+            clearInterval(game.timers.question);
+            let ms = 150;
+            const bar = document.getElementById('q-timer-fill');
+            game.timers.question = setInterval(() => {
+                ms--;
+                bar.style.width = (ms / 1.5) + "%";
+                if(ms <= 0) processAnswer("###TIMEOUT###");
+            }, 100);
+        }
+
+        function processAnswer(userAns) {
+            clearInterval(game.timers.question);
+            const q = game.questions[game.currentIndex];
+            const normalize = (s) => s.toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const isCorrect = normalize(userAns) === normalize(q.a);
+            if(isCorrect) { game.score += 50; game.correct++; } else { game.wrong++; }
+            showFeedback(isCorrect, q.a, q.ref);
+        }
+
+        function showFeedback(correct, answer, ref) {
+            const f = document.getElementById('feedback');
+            const ft = document.getElementById('feedback-text');
+            const fr = document.getElementById('feedback-ref');
+            f.classList.remove('hidden');
+            ft.innerText = correct ? "¡EXCELENTE!" : `INCORRECTO (Era: ${answer})`;
+            ft.className = correct ? "font-black text-xl italic text-green-400" : "font-black text-xl italic text-red-500";
+            fr.innerText = "Ref: " + ref;
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+            document.getElementById('word-input').disabled = true;
+            setTimeout(() => {
+                game.currentIndex++;
+                document.getElementById('word-input').disabled = false;
+                renderQuestion();
+            }, 1800);
+        }
+
+        function finalize() {
+            clearInterval(game.timers.global);
+            clearInterval(game.timers.question);
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('status-bar').classList.add('hidden');
+            document.getElementById('screen-end').classList.remove('hidden');
+            document.getElementById('end-disciple').innerText = game.disciple;
+            document.getElementById('final-points').innerText = game.score;
+            document.getElementById('correct-count').innerText = game.correct;
+            document.getElementById('wrong-count').innerText = game.wrong;
+
+            if(game.score >= 800) {
+                generateDiploma();
+            }
+        }
+
+        function generateDiploma() {
+            const diploma = document.getElementById('diploma-box');
+            diploma.classList.remove('hidden');
+            document.getElementById('btn-print').classList.remove('hidden');
+            document.getElementById('diploma-name').innerText = game.disciple;
+            document.getElementById('diploma-msg').innerText = `¡Felicitaciones por haber logrado un récord de: ${game.score} puntos!`;
+            document.getElementById('diploma-date').innerText = "Otorgado el: " + new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Lógica de medallas
+            const medalIcon = document.getElementById('medal-icon');
+            const starsRow = document.getElementById('stars-row');
+            const rankText = document.getElementById('medal-rank');
+            
+            let color = "#cd7f32"; // Bronce default
+            let rank = "Bronce";
+            let stars = 1;
+
+            if(game.score > 950) {
+                color = "#fbbf24"; // Oro
+                rank = "Líder de Palabra";
+                stars = 3;
+            } else if(game.score > 850) {
+                color = "#94a3b8"; // Plata
+                rank = "Plata";
+                stars = 2;
+            }
+
+            starsRow.innerHTML = "★".repeat(stars) + " <span class='mx-2 text-slate-400 opacity-30'>•</span> " + "★".repeat(stars);
+            rankText.innerText = rank;
+            rankText.style.color = color;
+
+            medalIcon.innerHTML = `
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" fill="${color}" fill-opacity="0.2" stroke="${color}" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="6" fill="${color}" stroke="${color}" stroke-width="1"/>
+                    <path d="M12 8V16M8 12H16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+
+        document.getElementById('word-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') processAnswer(e.target.value);
+        });
+    </script>
+</body>
+</html>
