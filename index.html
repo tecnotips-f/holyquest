@@ -6,78 +6,235 @@
     <title>HolyQuest.1.1 - Tecnotips</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #fbbf24;
-            --bg-dark: #0f172a;
+            --primary:   #f97316;   /* naranja cálido */
+            --secondary: #8b5cf6;   /* violeta vibrante */
+            --accent:    #06b6d4;   /* cian brillante */
+            --gold:      #f59e0b;   /* dorado */
+            --success:   #10b981;   /* verde esmeralda */
+            --danger:    #ef4444;   /* rojo vivo */
+            --bg:        #1e0a3c;   /* morado profundo */
+            --bg2:       #2d1265;   /* morado medio */
+            --card:      rgba(255,255,255,0.07);
         }
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-dark);
-            color: #f8fafc;
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg);
+            color: #f0e6ff;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .font-holy { font-family: 'Cinzel', serif; }
-        
+        /* Fondo animado con estrellas */
+        body::before {
+            content:'';
+            position:fixed;inset:0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(139,92,246,.35) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 80%, rgba(249,115,22,.25) 0%, transparent 55%),
+                radial-gradient(ellipse at 60% 10%, rgba(6,182,212,.2) 0%, transparent 45%);
+            pointer-events:none;z-index:0;
+        }
+        main, header, footer { position: relative; z-index:1; }
+
+        .font-holy { font-family: 'Fredoka One', cursive; letter-spacing:.04em; }
+
+        /* ── Tarjeta principal ── */
         .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(251, 191, 36, 0.2);
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(255,255,255,0.13);
+            box-shadow: 0 8px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
         }
 
+        /* ── Botones de opción ── */
         .option-btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.18s cubic-bezier(.34,1.56,.64,1);
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,255,255,0.15);
+            color: #f0e6ff;
+            border-radius: 1rem;
+            font-weight: 700;
         }
-        .option-btn:hover {
-            background: rgba(251, 191, 36, 0.1);
+        .option-btn:hover:not(:disabled) {
+            background: rgba(249,115,22,0.18);
             border-color: var(--primary);
-            transform: scale(1.02);
+            transform: scale(1.04) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(249,115,22,.3);
+            color: #fff;
+        }
+        .option-btn:active:not(:disabled) { transform: scale(.97); }
+
+        /* ── Respuesta CORRECTA: sombreado verde vibrante ── */
+        .option-btn.correct-answer {
+            background: linear-gradient(135deg, #064e3b, #065f46) !important;
+            border-color: #10b981 !important;
+            color: #6ee7b7 !important;
+            box-shadow: 0 0 0 3px rgba(16,185,129,.5), 0 6px 24px rgba(16,185,129,.4) !important;
+            animation: correctPulse .5s ease;
+        }
+        @keyframes correctPulse {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.06); }
+            100% { transform: scale(1); }
         }
 
-        .timer-bar {
-            transition: width 0.1s linear;
+        /* ── Respuesta INCORRECTA: vibración + rojo ── */
+        .option-btn.wrong-answer {
+            background: linear-gradient(135deg, #450a0a, #7f1d1d) !important;
+            border-color: #ef4444 !important;
+            color: #fca5a5 !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,.5), 0 6px 24px rgba(239,68,68,.3) !important;
+            animation: shakeBtn .5s ease;
+        }
+        /* Respuesta correcta revelada cuando el usuario falla */
+        .option-btn.reveal-correct {
+            background: linear-gradient(135deg, #064e3b, #065f46) !important;
+            border-color: #10b981 !important;
+            color: #6ee7b7 !important;
+            box-shadow: 0 0 0 3px rgba(16,185,129,.45) !important;
+            animation: revealPop .4s .15s both ease;
+        }
+        @keyframes revealPop {
+            0%   { transform: scale(.95); opacity:.6; }
+            60%  { transform: scale(1.05); }
+            100% { transform: scale(1);   opacity:1; }
+        }
+        @keyframes shakeBtn {
+            0%,100% { transform: translateX(0); }
+            15%     { transform: translateX(-8px); }
+            30%     { transform: translateX(8px); }
+            45%     { transform: translateX(-6px); }
+            60%     { transform: translateX(6px); }
+            75%     { transform: translateX(-3px); }
+            90%     { transform: translateX(3px); }
         }
 
-        /* Estilos del Diploma */
+        /* ── Timer bar ── */
+        .timer-bar { transition: width 0.1s linear; }
+
+        /* ── Feedback banner ── */
+        #feedback { border-radius:1rem; padding:.75rem 1.25rem; margin-top:.5rem; }
+        #feedback.fb-correct {
+            background: linear-gradient(135deg,rgba(16,185,129,.2),rgba(6,78,59,.35));
+            border: 1.5px solid rgba(16,185,129,.5);
+        }
+        #feedback.fb-wrong {
+            background: linear-gradient(135deg,rgba(239,68,68,.18),rgba(127,29,29,.3));
+            border: 1.5px solid rgba(239,68,68,.45);
+        }
+
+        /* ── Header ── */
+        header {
+            background: rgba(30,10,60,.85);
+            border-bottom: 2px solid rgba(249,115,22,.35);
+            backdrop-filter: blur(12px);
+        }
+
+        /* ── Input estilo alegre ── */
+        input[type=text] {
+            background: rgba(255,255,255,.08);
+            border: 2px solid rgba(255,255,255,.18);
+            color: #f0e6ff;
+            border-radius: 1rem;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        input[type=text]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(249,115,22,.25);
+            outline: none;
+        }
+        input::placeholder { color: rgba(240,230,255,.4); }
+
+        /* ── Botón principal ── */
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            border: none;
+            color: white;
+            font-weight: 800;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(249,115,22,.5), inset 0 1px 0 rgba(255,255,255,.2);
+            transition: all .2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(249,115,22,.6); }
+        .btn-primary:active { transform: scale(.97); }
+
+        /* ── Badge tipo ── */
+        .type-badge {
+            background: rgba(139,92,246,.25);
+            color: #c4b5fd;
+            border: 1px solid rgba(139,92,246,.4);
+            border-radius: 999px;
+            font-size:.68rem;
+            font-weight:900;
+            letter-spacing:.08em;
+            padding:.2rem .75rem;
+        }
+
+        /* ── Diploma ── */
         #diploma-box {
-            background: #fff9eb;
-            color: #1e293b;
-            border: 15px solid #d97706;
-            outline: 5px double #fbbf24;
+            background: linear-gradient(160deg,#fffbeb,#fef3c7);
+            color: #1e0a3c;
+            border: 12px solid #f59e0b;
+            outline: 4px double #fbbf24;
             position: relative;
+            border-radius: .5rem;
         }
         .diploma-ornament {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: 70px; height: 70px;
             border: 2px solid #d97706;
         }
-        .top-left { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
-        .top-right { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
-        .bottom-left { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
-        .bottom-right { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+        .top-left    { top:10px;  left:10px;  border-right:0; border-bottom:0; }
+        .top-right   { top:10px;  right:10px; border-left:0;  border-bottom:0; }
+        .bottom-left { bottom:10px; left:10px;  border-right:0; border-top:0; }
+        .bottom-right{ bottom:10px; right:10px; border-left:0;  border-top:0; }
 
-        input::placeholder { color: #64748b; }
+        /* ── Animaciones de entrada ── */
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(18px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .anim-in { animation: fadeUp .4s ease both; }
+        .anim-in-d1 { animation: fadeUp .4s .08s ease both; }
+        .anim-in-d2 { animation: fadeUp .4s .16s ease both; }
+        .anim-in-d3 { animation: fadeUp .4s .24s ease both; }
+
+        /* ── Confetti ── */
+        .confetti-piece {
+            position:fixed; top:-10px; width:10px; height:10px;
+            pointer-events:none; z-index:9999;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            to { transform: translateY(105vh) rotate(720deg); opacity:0; }
+        }
 
         @media print {
             body * { visibility: hidden; }
             #diploma-box, #diploma-box * { visibility: visible; }
-            #diploma-box { position: absolute; left: 0; top: 0; width: 100%; }
+            #diploma-box { position:absolute; left:0; top:0; width:100%; }
         }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <header class="w-full bg-slate-900/80 border-b-2 border-amber-500/30 p-4 shadow-2xl sticky top-0 z-50">
+    <header class="w-full p-4 shadow-2xl sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-holy tracking-widest text-amber-500 drop-shadow-md">HOLYQUEST</h1>
-            <div id="status-bar" class="hidden flex items-center space-x-6">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">✝️</span>
+                <h1 class="text-3xl font-holy" style="background:linear-gradient(135deg,#f97316,#f59e0b,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 8px rgba(249,115,22,.5))">HOLYQUEST</h1>
+            </div>
+            <div id="status-bar" class="hidden flex items-center gap-4">
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold leading-none">Discípulo</p>
-                    <p id="display-name" class="text-amber-400 font-bold italic"></p>
+                    <p class="text-[9px] uppercase font-black tracking-widest" style="color:#c4b5fd">Discípulo</p>
+                    <p id="display-name" class="font-bold text-sm" style="color:#fde68a"></p>
                 </div>
-                <div class="bg-slate-800 p-2 rounded-lg border border-amber-500/20">
-                    <p id="global-clock" class="text-xl font-mono text-amber-500 font-bold leading-none">10:00</p>
+                <div class="flex items-center gap-2 px-4 py-2 rounded-xl" style="background:rgba(249,115,22,.15);border:1.5px solid rgba(249,115,22,.35)">
+                    <span class="text-lg">⏱️</span>
+                    <p id="global-clock" class="text-xl font-mono font-black leading-none" style="color:#fb923c">10:00</p>
                 </div>
             </div>
         </div>
@@ -85,48 +242,59 @@
 
     <main class="flex-grow flex items-center justify-center p-4 relative">
         <!-- Pantalla de Inicio -->
-        <div id="screen-start" class="max-w-md w-full glass p-8 rounded-3xl text-center space-y-6 shadow-2xl">
-            <div class="space-y-2">
-                <h2 class="text-4xl font-holy text-white">BIENVENIDO</h2>
-                <p class="text-slate-400 text-sm italic">Ingresa tus datos para comenzar el desafío de 20 preguntas.</p>
+        <div id="screen-start" class="max-w-md w-full glass p-8 rounded-3xl text-center space-y-6 shadow-2xl anim-in">
+            <div class="space-y-3">
+                <div class="text-6xl mb-2" style="filter:drop-shadow(0 4px 12px rgba(249,115,22,.6))">📖✨</div>
+                <h2 class="text-4xl font-holy" style="background:linear-gradient(135deg,#f97316,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">BIENVENIDO</h2>
+                <p class="text-sm font-semibold" style="color:#c4b5fd">¿Cuánto conoces de la Biblia? ¡Demuéstralo con 20 preguntas!</p>
+                <div class="flex justify-center gap-4 pt-1 text-xs font-black uppercase tracking-wider" style="color:rgba(240,230,255,.5)">
+                    <span>📚 Selección Múltiple</span>
+                    <span>⚡ V/F</span>
+                    <span>🔤 Palabra Oculta</span>
+                </div>
             </div>
-            
             <div class="space-y-4">
-                <input type="text" id="input-username" 
-                    class="w-full bg-slate-800 border-2 border-slate-700 rounded-xl p-4 text-center focus:border-amber-500 outline-none transition-all text-white font-bold" 
-                    placeholder="NOMBRE DEL DISCÍPULO">
-                <button onclick="initApp()" class="w-full py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(217,119,6,0.3)] transition-all transform active:scale-95">
-                    INICIAR CUESTIONARIO
+                <input type="text" id="input-username"
+                    class="w-full p-4 text-center font-black text-lg"
+                    placeholder="Tu nombre, discípulo..."
+                    style="background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);border-radius:1rem;color:#f0e6ff;">
+                <button onclick="initApp()" class="btn-primary w-full py-4 text-lg font-black tracking-wide">
+                    🚀 ¡COMENZAR EL DESAFÍO!
                 </button>
             </div>
         </div>
 
         <!-- Pantalla de Juego -->
-        <div id="screen-quiz" class="hidden max-w-2xl w-full space-y-6">
-            <div class="flex justify-between items-end px-2">
-                <div>
-                    <span id="q-type" class="bg-amber-900/40 text-amber-300 text-[10px] px-3 py-1 rounded-full border border-amber-500/30 uppercase font-black">TIPO</span>
-                    <h3 id="q-number" class="text-slate-400 text-xs mt-1 font-bold">PREGUNTA 1 DE 20</h3>
+        <div id="screen-quiz" class="hidden max-w-2xl w-full space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <div class="flex items-center gap-2">
+                    <span id="q-type" class="type-badge">TIPO</span>
+                    <h3 id="q-number" class="text-xs font-black tracking-wider" style="color:rgba(240,230,255,.5)">PREGUNTA 1 DE 20</h3>
                 </div>
+                <div id="score-live" class="text-sm font-black" style="color:#f59e0b">⭐ 0 pts</div>
             </div>
 
-            <div class="glass p-8 rounded-3xl space-y-8 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-slate-800">
-                    <div id="q-timer-fill" class="timer-bar h-full bg-amber-500 w-full"></div>
+            <div class="glass p-7 rounded-3xl space-y-6 relative overflow-hidden">
+                <!-- Timer bar -->
+                <div class="absolute top-0 left-0 w-full h-1.5 rounded-t-3xl" style="background:rgba(255,255,255,.08)">
+                    <div id="q-timer-fill" class="timer-bar h-full rounded-t-3xl" style="background:linear-gradient(90deg,#06b6d4,#8b5cf6,#f97316);width:100%"></div>
                 </div>
 
-                <p id="q-text" class="text-xl md:text-2xl font-semibold text-center leading-relaxed"></p>
+                <p id="q-text" class="text-xl md:text-2xl font-extrabold text-center leading-relaxed pt-2" style="color:#f0e6ff"></p>
 
-                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
 
-                <div id="input-container" class="hidden flex flex-col items-center space-y-4">
-                    <input type="text" id="word-input" class="w-full max-w-sm bg-slate-800 border-2 border-slate-700 rounded-xl p-4 text-center text-xl font-bold uppercase tracking-widest text-amber-400" placeholder="Escribe la palabra...">
-                    <button onclick="processAnswer(document.getElementById('word-input').value)" class="bg-amber-600 px-8 py-3 rounded-xl font-bold hover:bg-amber-500 transition-all">ENVIAR RESPUESTA</button>
+                <div id="input-container" class="hidden flex flex-col items-center gap-3">
+                    <input type="text" id="word-input"
+                        class="w-full max-w-sm p-4 text-center text-xl font-black uppercase tracking-widest"
+                        style="background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.2);border-radius:1rem;color:#fde68a;"
+                        placeholder="Escribe la respuesta...">
+                    <button onclick="processAnswer(document.getElementById('word-input').value)" class="btn-primary px-8 py-3 font-black">ENVIAR ✓</button>
                 </div>
 
-                <div id="feedback" class="hidden text-center animate-bounce">
-                    <p id="feedback-text" class="font-black text-xl italic"></p>
-                    <p id="feedback-ref" class="text-slate-400 text-sm mt-1 italic"></p>
+                <div id="feedback" class="hidden text-center">
+                    <p id="feedback-text" class="font-black text-xl"></p>
+                    <p id="feedback-ref" class="text-sm mt-1 font-semibold" style="color:rgba(240,230,255,.6)"></p>
                 </div>
             </div>
         </div>
@@ -182,16 +350,16 @@
                     </div>
                 </div>
 
-                <div class="flex space-x-4">
-                    <button onclick="location.reload()" class="flex-1 py-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold transition-all">NUEVO INTENTO</button>
-                    <button id="btn-print" onclick="window.print()" class="hidden flex-1 py-4 bg-amber-600 hover:bg-amber-500 rounded-xl font-bold transition-all">IMPRIMIR DIPLOMA</button>
+                <div class="flex gap-3">
+                    <button onclick="location.reload()" class="flex-1 py-4 rounded-xl font-black transition-all" style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.18);color:#f0e6ff">🔄 NUEVO INTENTO</button>
+                    <button id="btn-print" onclick="window.print()" class="hidden flex-1 py-4 rounded-xl font-black transition-all btn-primary">🖨️ IMPRIMIR DIPLOMA</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="w-full bg-slate-950 border-t border-white/5 p-4 text-center">
-        <p class="text-slate-500 text-[10px] font-bold tracking-[0.3em] uppercase italic">Tecnotips — Tecnología con Propósito</p>
+    <footer class="w-full p-4 text-center" style="background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.06)">
+        <p class="text-[10px] font-black tracking-[0.3em] uppercase" style="color:rgba(196,181,253,.4)">✝️ Tecnotips — Tecnología con Propósito</p>
     </footer>
 
     <script>
@@ -361,6 +529,7 @@
             document.getElementById('screen-quiz').classList.remove('hidden');
             document.getElementById('status-bar').classList.remove('hidden');
             document.getElementById('display-name').innerText = game.disciple;
+            document.getElementById('score-live').innerText = '⭐ 0 pts';
             startGlobalTimer();
             renderQuestion();
         }
@@ -387,13 +556,22 @@
             optsContainer.innerHTML = '';
             inputContainer.classList.add('hidden');
             feedback.classList.add('hidden');
+            feedback.classList.remove('fb-correct','fb-wrong');
+            // Resetear word-input
+            const wi2 = document.getElementById('word-input');
+            wi2.style.borderColor = ''; wi2.style.boxShadow = '';
             if(q.type === 'MC' || q.type === 'TF') {
                 typeLabel.innerText = q.type === 'MC' ? 'Selección Múltiple' : 'Verdadero / Falso';
-                q.o.forEach(opt => {
+                q.o.forEach((opt, idx) => {
                     const btn = document.createElement('button');
-                    btn.className = "option-btn p-4 glass rounded-xl border border-white/10 font-bold text-sm text-center";
+                    btn.className = "option-btn p-4 rounded-xl font-bold text-sm text-center anim-in";
+                    btn.style.animationDelay = (idx * 0.07) + 's';
                     btn.innerText = opt;
-                    btn.onclick = () => processAnswer(opt);
+                    btn.onclick = () => {
+                        document.querySelectorAll('.option-btn').forEach(b => b._wasClicked = false);
+                        btn._wasClicked = true;
+                        processAnswer(opt);
+                    };
                     optsContainer.appendChild(btn);
                 });
             } else {
@@ -422,24 +600,118 @@
             const normalize = (s) => s.toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const isCorrect = normalize(userAns) === normalize(q.a);
             if(isCorrect) { game.score += 50; game.correct++; } else { game.wrong++; }
+            // Para respuestas de texto FB: marcar el input como incorrecto visualmente
+            if(q.type === 'FB' && !isCorrect) {
+                const wi = document.getElementById('word-input');
+                wi.style.borderColor = '#ef4444';
+                wi.style.boxShadow = '0 0 0 3px rgba(239,68,68,.35)';
+                wi.style.animation = 'shakeBtn .45s ease';
+                setTimeout(() => {
+                    wi.style.animation = '';
+                    wi.style.borderColor = '';
+                    wi.style.boxShadow = '';
+                }, 500);
+            }
             showFeedback(isCorrect, q.a, q.ref);
         }
 
+        /* ── Sonido via Web Audio API ── */
+        function playBell() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                // Acorde alegre: Do-Mi-Sol
+                [[523.25,0],[659.25,.1],[783.99,.2],[1046.5,.35]].forEach(([freq, delay]) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+                    g.gain.setValueAtTime(0, ctx.currentTime + delay);
+                    g.gain.linearRampToValueAtTime(0.35, ctx.currentTime + delay + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.7);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(ctx.currentTime + delay);
+                    o.stop(ctx.currentTime + delay + 0.8);
+                });
+            } catch(e) {}
+        }
+
+        function playBuzz() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(180, ctx.currentTime);
+                o.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.35);
+                g.gain.setValueAtTime(0.3, ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(); o.stop(ctx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        /* ── Confetti al acertar ── */
+        function launchConfetti(count=18) {
+            const colors = ['#f97316','#f59e0b','#10b981','#06b6d4','#8b5cf6','#ec4899','#fde68a'];
+            for(let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetti-piece';
+                el.style.left = (10 + Math.random() * 80) + 'vw';
+                el.style.background = colors[Math.floor(Math.random()*colors.length)];
+                el.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+                el.style.width = el.style.height = (7 + Math.random()*7) + 'px';
+                const dur = 1.2 + Math.random() * 1.2;
+                el.style.animationDuration = dur + 's';
+                el.style.animationDelay = (Math.random() * 0.4) + 's';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+            }
+        }
+
         function showFeedback(correct, answer, ref) {
-            const f = document.getElementById('feedback');
+            const f  = document.getElementById('feedback');
             const ft = document.getElementById('feedback-text');
             const fr = document.getElementById('feedback-ref');
-            f.classList.remove('hidden');
-            ft.innerText = correct ? "¡EXCELENTE!" : `INCORRECTO (Era: ${answer})`;
-            ft.className = correct ? "font-black text-xl italic text-green-400" : "font-black text-xl italic text-red-500";
-            fr.innerText = "Ref: " + ref;
-            document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            allBtns.forEach(b => b.disabled = true);
             document.getElementById('word-input').disabled = true;
+
+            if(correct) {
+                playBell();
+                launchConfetti(22);
+                // Sombrear en verde el botón pulsado
+                allBtns.forEach(b => {
+                    if(b.innerText.trim().toUpperCase() === answer.trim().toUpperCase())
+                        b.classList.add('correct-answer');
+                });
+                f.classList.remove('hidden','fb-wrong');
+                f.classList.add('fb-correct');
+                ft.innerHTML = '🎉 <span style="color:#6ee7b7;font-weight:900">¡EXCELENTE! +50 pts</span>';
+            } else {
+                playBuzz();
+                // Vibrar el botón incorrecto (el que pulsó)
+                allBtns.forEach(b => {
+                    if(b._wasClicked) b.classList.add('wrong-answer');
+                });
+                // Revelar la correcta con animación
+                allBtns.forEach(b => {
+                    if(b.innerText.trim().toUpperCase() === answer.trim().toUpperCase())
+                        b.classList.add('reveal-correct');
+                });
+                f.classList.remove('hidden','fb-correct');
+                f.classList.add('fb-wrong');
+                ft.innerHTML = `❌ <span style="color:#fca5a5;font-weight:900">Incorrecto</span> · Era: <span style="color:#6ee7b7;font-weight:900">${answer}</span>`;
+            }
+            fr.innerHTML = `<span style="color:rgba(240,230,255,.55)">📖 Ref: ${ref}</span>`;
+            f.classList.remove('animate-bounce');
+            // actualizar score en vivo
+            document.getElementById('score-live').innerText = '⭐ ' + game.score + ' pts';
             setTimeout(() => {
                 game.currentIndex++;
                 document.getElementById('word-input').disabled = false;
                 renderQuestion();
-            }, 1800);
+            }, 1900);
         }
 
         function finalize() {
@@ -455,6 +727,8 @@
 
             if(game.score >= 800) {
                 generateDiploma();
+                playBell();
+                setTimeout(() => launchConfetti(45), 300);
             }
         }
 
@@ -501,6 +775,39 @@
         document.getElementById('word-input').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') processAnswer(e.target.value);
         });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => {
+                        console.log('[SW] Registrado:', reg.scope);
+                        // Auto-recarga cuando hay nueva versión instalada
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('[SW] Nueva versión lista — recargando...');
+                                    window.location.reload();
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.warn('[SW] Error al registrar:', err));
+
+                // Red de seguridad: recarga si el controlador cambia
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
+
+                // Escucha mensaje SW_UPDATED enviado desde sw.js
+                navigator.serviceWorker.addEventListener('message', e => {
+                    if (e.data && e.data.type === 'SW_UPDATED') {
+                        window.location.reload();
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>
